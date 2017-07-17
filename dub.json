@@ -1,0 +1,9 @@
+{
+	"name": "algorithm",
+	"description": "A simple and developer-friendly algorithm library for D.",
+	"copyright": "Copyright © 2017, 0xEAB",
+	"license": "public domain",
+	"authors": ["0xEAB"],
+	"dependencies": {
+	}
+}
