@@ -1,8 +1,6 @@
 {
 	"name": "algorithm",
-	"description": "A simple and developer-friendly algorithm library for D.",
+	"description": "A simple and developer-friendly algorithm library for the D programming language.",
 	"license": "public domain",
-	"authors": ["0xEAB"],
-	"dependencies": {
-	}
+	"authors": ["0xEAB"]
 }
