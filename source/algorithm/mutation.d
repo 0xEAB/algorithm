@@ -8,21 +8,20 @@ import std.traits : isArray;
 /++
     Creates a clone of a range
  +/
-@safe Range clone(T, Range)(Range source) if (isInputRange!Range)
+@safe Range clone(Range)(Range source) if (isInputRange!Range)
 {
-    auto output = new T[source.length];
-    output[0 .. source.length] = source;
-    return output;
+    return source.dup;
 }
 /++ Creates a clone of an associative array +/
 @safe Te[Tidx] clone(Te, Tidx)(Te[Tidx] source)
 {
+    return source.dup; /*
     Te[Tidx] output;
 
     foreach (idx, var; source)
         output[idx] = var;
 
-    return output;
+    return output;*/
 }
 
 /++ Examples: +/
@@ -31,13 +30,16 @@ import std.traits : isArray;
     int[] array = [10, 20, 30, 40, 10, 20, 30, 40];
 
     // Clone is a clone of the array
-    int[] clone = array.clone!int();
+    int[] clone = array.clone();
 
     // Both have the same length.
     assert(clone.length == array.length);
     // The clone contains the same elements as its source array
     foreach (idx, val; clone)
         assert(array[idx] == val);
+
+    // But it is not the same reference
+    assert(array.ptr != clone.ptr);
 }
 /++ ditto +/
 @safe unittest
@@ -367,4 +369,38 @@ char[] removeFirstOf(T)(ref char[] r, T element)
 
     // Therefore, it is 1 element shorter.
     assert(array.length == 5);
+}
+
+/++
+    Creates a char[] copy of the given string
+ +/
+@safe char[] toCharArray(string s)
+{
+    return s.dup;
+}
+/++ Examples: +/
+@safe unittest
+{
+    string str = "Timea";
+
+    char[] arr = str.toCharArray();
+
+    assert(arr == ['T', 'i', 'm', 'e', 'a']);
+}
+
+/++
+    Creates a string copy of the given char[]
+ +/
+@safe string toString(char[] array)
+{
+    return array.idup;
+}
+/++ Examples: +/
+@safe unittest
+{
+    char[] arr = ['T', 'i', 'm', 'e', 'a'];
+
+    string str = arr.toString();
+
+    assert(str == "Timea");
 }

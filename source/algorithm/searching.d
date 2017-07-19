@@ -1,11 +1,12 @@
 module algorithm.searching;
 
 import std.algorithm.searching;
-import std.functional;
+import std.conv : to;
+import std.functional : binaryFun, toDelegate;
 import std.range;
 
 /++
-    Determines whether all elements of a range satisfy a condition
+    Determines whether all elements of the given range satisfy a condition
  +/
 bool all(T, Range)(Range r, bool delegate(T element) condition)
         if (isInputRange!Range)
@@ -22,7 +23,7 @@ bool all(T, Range)(Range r, bool function(T element) condition)
 {
     return r.all!T(toDelegate(condition));
 }
-
+/++ ditto +/
 alias appliesToAll = all;
 
 /++ Examples: +/
@@ -56,7 +57,7 @@ alias appliesToAll = all;
 }
 
 /++
-    Determines whether any element of a range satisfies a condition
+    Determines whether any element of the given range satisfies a condition
 +/
 bool any(T, Range)(Range r, bool delegate(T element) condition)
         if (isInputRange!Range)
@@ -73,7 +74,7 @@ bool any(T, Range)(Range r, bool function(T element) condition)
 {
     return r.any!T(toDelegate(condition));
 }
-
+/++ ditto +/
 alias appliesToAny = any;
 
 /++ Examples: +/
@@ -107,7 +108,7 @@ alias appliesToAny = any;
 }
 
 /++
-    Determines whether a range contains a specified element
+    Determines whether the given range contains a specified element
  +/
 bool contains(Range, T)(Range r, scope T element)
         if (is(typeof(find!"a == b"(r, element))))
@@ -243,4 +244,198 @@ ptrdiff_t indexOf(Range, T)(Range r, T element)
     // The array doesn't contain 'z'.
     // indexOf() returns -1
     assert(array.indexOf('z') < 0);
+}
+
+/++
+    Determines whether the given range starts with the given element
+ +/
+@safe bool startsWith(Range, T)(Range doesThisStart, T withThis)
+        if (isInputRange!Range
+            && is(typeof(binaryFun!"a == b"(doesThisStart.front, withThis)) : bool))
+{
+    return std.algorithm.searching.startsWith(doesThisStart, withThis);
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" begins with an 'O'
+    char c = 'O';
+    assert(word.startsWith(c));
+
+    // "Oachkatzlschwoaf" doesn't begin with an 'f'
+    assert(!word.startsWith('f'));
+}
+
+/++
+    Determines whether the given range starts with all the elements from another one in the same order
+ +/
+@safe bool startsWith(Range, Rn)(Range doesThisStart, Rn withThese)
+        if (isInputRange!Range && isInputRange!Rn
+            && is(typeof(binaryFun!"a == b"(doesThisStart.front, withThese.front)) : bool))
+{
+    return std.algorithm.searching.startsWith(doesThisStart, withThese);
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    int[] primes = [3, 5, 7, 11, 13, 17, 19, 23];
+
+    // primes starts with 3 and 5
+    int[] num = [3, 5];
+    assert(primes.startsWith(num));
+    // primes starts with 3, 5 and 7
+    assert(primes.startsWith([3, 5, 7]));
+
+    // primes doesn't start with 1, 2 and 3
+    assert(!primes.startsWith([1, 2, 3]));
+
+    // primes doesn't start with 5 and then 3
+    // Note: wrong order
+    assert(!primes.startsWith([5, 3]));
+}
+/++ ditto +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" begins with "Oa"
+    char[] arr = ['O', 'a'];
+    assert(word.startsWith(arr));
+
+    // "Oachkatzlschwoaf" begins with "Oachkatzl"
+    assert(word.startsWith("Oachkatzl"));
+
+    // "Oachkatzlschwoaf" doesn't begin with "aO"
+    // Note: wrong order
+    assert(!word.startsWith(['a', 'O']));
+}
+
+/++
+    Determines whether the given range begins with any element of another range
+ +/
+@safe bool startsWithAny(Range, Rn)(Range doesThisStart, Rn withAnyOfThese)
+        if (isInputRange!Range && isInputRange!Rn
+            && (is(typeof(binaryFun!"a == b"(doesThisStart.front, withAnyOfThese.front))
+            : bool) || is(typeof(binaryFun!"a == b"(doesThisStart.front,
+            withAnyOfThese.front.front)) : bool)))
+{
+    foreach (x; withAnyOfThese)
+        if (doesThisStart.startsWith(x))
+            return true;
+
+    return false;
+}
+/++ ditto +/
+@safe bool startsWithAny(Range, Rn...)(Range doesThisStart, Rn withAnyOfThese)
+        if (isInputRange!Range && Rn.length > 1)
+{
+
+    foreach (x; withAnyOfThese)
+        if (doesThisStart.startsWith(x))
+            return true;
+
+    return false;
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" doesn't begin with 'o'
+    // but it begins with 'O'
+    assert(word.startsWithAny(['o', 'O']));
+    assert(word.startsWithAny('o', 'O'));
+
+    // "Oachkatzlschwoaf" begins with 'O'
+    assert(word.startsWithAny(['O', 'z']));
+    assert(word.startsWithAny('O', 'z'));
+
+    // "Oachkatzlschwoaf" does neither begin with "abc"
+    // nor with "schwoaf"
+    // but it begins with "Oach"
+    assert(word.startsWithAny(["abc", "schwoaf", "Oach"]));
+    assert(word.startsWithAny("abc", "schwoaf", "Oach"));
+
+    // "Oachkatzlschwoaf" does neither begin with "abc"
+    // nor with "xyz"
+    assert(!word.startsWithAny(["abc", "xyz"]));
+    assert(!word.startsWithAny("abc", "xyz"));
+}
+
+/++
+    Returns:
+        the zero-based index of the argument that the given range starts with
+        <0 ... no match found
+ +/
+int startsWithNth(Range, Rn...)(Range thisStarts, Rn withTheNthOfThese)
+        if (isInputRange!Range && Rn.length > 1
+            && is(typeof(std.algorithm.searching.startsWith!"a == b"(thisStarts,
+            withTheNthOfThese[0])) : bool) && is(typeof(std.algorithm.searching.startsWith!"a == b"(thisStarts,
+            withTheNthOfThese[1 .. $])) : uint))
+{
+    immutable int r = cast(int)(std.algorithm.searching.startsWith(thisStarts, withTheNthOfThese));
+    return (r - 1);
+}
+/++ ditto +/
+int startsWithNth(Range, Rn)(Range thisStarts, Rn withTheNthOfThese)
+        if (isInputRange!Range && isInputRange!Rn
+            && (is(typeof(binaryFun!"a == b"(thisStarts.front, withTheNthOfThese.front))
+            : bool) || is(typeof(binaryFun!"a == b"(thisStarts.front,
+            withTheNthOfThese.front.front)) : bool)))
+{
+    // HACK: this patchy workaround function might not return the same results as the variadic one above
+
+    foreach (idx, var; withTheNthOfThese)
+        if (thisStarts.startsWith(var))
+            return idx;
+
+    return -1;
+}
+
+/++ Examples: +/
+@safe unittest
+{
+
+    int[] arr = [11, 22, 33];
+
+    // arr starts with 11
+    // 11 has the index 3 in the given range
+    assert(arr.startsWithNth(0, 22, 33, 11, 44) == 3);
+    assert(arr.startsWithNth([0, 22, 33, 11, 44]) == 3);
+
+    // arr starts with 11
+    // 11 has the index 1 in the given range
+    assert(arr.startsWithNth(0, 11) == 1);
+    assert(arr.startsWithNth([0, 11]) == 1);
+
+    // arr starts with 11
+    // 11 isn't part of the given range
+    assert(arr.startsWithNth(33, 22) < 0);
+    assert(arr.startsWithNth([33, 22]) < 0);
+}
+/++ ditto +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";    
+
+    // "Oachkatzlschwoaf" begins with 'O'
+    // 'O' is the 0th element
+    assert(word.startsWithNth('O', 'o') == 0);
+    char[] arr = ['O', 'o'];
+    assert(word.startsWithNth(arr) == 0);
+
+    // "Oachkatzlschwoaf" doesn't begin with "Eich"
+    // but it begins with "Oach" that has the index 1
+    assert(word.startsWithNth("Eich", "Oach", "Aich") == 1);
+    assert(word.startsWithNth(["Eich", "Oach", "Aich"]) == 1);
+
+    // "Oachkatzlschwoaf" does neither begin with "Owl"
+    // nor with "One"
+    assert(word.startsWithNth("Owl", "One") < 0);
+    assert(word.startsWithNth(["Owl", "One"]) < 0);
 }
