@@ -1,4 +1,4 @@
-# algorithm
+# algorithm [![Dub version](https://img.shields.io/dub/v/algorithm.svg)](https://code.dlang.org/packages/algorithm)
 
 A simple and developer-friendly algorithm library for the D programming language.
 
