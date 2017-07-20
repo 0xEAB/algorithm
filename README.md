@@ -1,4 +1,4 @@
-# algorithm [![Dub version](https://img.shields.io/dub/v/algorithm.svg)](https://code.dlang.org/packages/algorithm)
+# algorithm [![Dub version](https://img.shields.io/dub/v/algorithm.svg)](https://code.dlang.org/packages/algorithm) [![Public Domain](https://img.shields.io/dub/l/algorithm.svg)](LICENSE)
 
 A simple and developer-friendly algorithm library for the D programming language.
 
