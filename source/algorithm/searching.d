@@ -1,9 +1,11 @@
 module algorithm.searching;
 
+import algorithm.mutation : cloneReversed;
 import std.algorithm.searching;
 import std.conv : to;
 import std.functional : binaryFun, toDelegate;
 import std.range;
+import std.traits : isNarrowString;
 
 /++
     Determines whether all elements of the given range satisfy a condition
@@ -105,6 +107,68 @@ alias appliesToAny = any;
     });
     // At least one element of array01 are smaller than -1
     assert(result03);
+}
+
+/++
+    Returns:
+        The common beginning/prefix of two ranges
+        This can also be an empty range if there is no common prefix.
+ +/
+alias commonPrefix = std.algorithm.searching.commonPrefix;
+/++ ditto +/
+alias commonStart = commonPrefix;
+
+/++ Examples: +/
+@safe unittest
+{
+    string a = "getCursorPosition()";
+    string b = "getCursorState()";
+    string c = "getScreenSize()";
+
+    // both a and b start with "getCursor"
+    assert(a.commonPrefix(b) == "getCursor");
+    // both a and c start with "get"
+    assert(a.commonPrefix(c) == "get");
+    // a and "setBackgroundColor" have no common prefix
+    assert(a.commonPrefix("setBackgroundColor") == "");
+}
+/++ ditto +/
+@safe unittest
+{
+    int[] primes = [3, 5, 7, 11, 13, 17, 19, 23];
+    int[] oddNum = [3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23];
+
+    // both prime and oddNum start with 3, 5 and 7
+    assert(oddNum.commonStart(primes) == [3, 5, 7]);
+    // oddNum and the passed array have  
+    assert(oddNum.commonStart([1, 2, 3]) == []);
+}
+
+/++
+    Returns:
+        The common ending/suffix of two ranges
+        This can also be an empty range if there is no common suffix.
+ +/
+@safe auto commonSuffix(R1, R2)(R1 r1, R2 r2)
+        if (is(typeof(binaryFun!pred(r1.front, r2.front)))
+            || (isNarrowString!R1 && isNarrowString!R2))
+{
+    auto output = r1.cloneReversed().commonPrefix(r2.cloneReversed());
+    return output.cloneReversed();
+}
+/++ ditto +/
+alias commonEnding = commonSuffix;
+
+/++ Examples: +/
+@safe unittest
+{
+    string a = "getScreenSize()";
+    string b = "getDefaultFontSize()";
+    string c = "getCursorPosition()";
+
+    assert(a.commonSuffix(b) == "Size()");
+    assert(a.commonSuffix(c) == "()");
+    assert(a.commonSuffix("eab") == "");
 }
 
 /++
