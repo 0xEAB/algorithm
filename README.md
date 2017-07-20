@@ -9,7 +9,7 @@ A simple and developer-friendly algorithm library for the D programming language
     * should state what the function is used for and what its result is.
     * don't need to explain how the function does it's job as long as this is not important to know.
     * shouldn't be too generic.
-    * If two functions are used for different tasks, they shouldn't have the same name - even if the tasks are related.
+    * If two functions are used for different tasks, they shouldn't have the same name - even if their tasks are related. In other words, all overloads should basically do the same.
 - Provide good examples.
     * Comments help to understand what happens.
     * Unit tests should provide hands-on usage examples.
