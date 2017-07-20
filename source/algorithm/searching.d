@@ -485,7 +485,7 @@ int startsWithNth(Range, Rn)(Range thisStarts, Rn withTheNthOfThese)
 /++ ditto +/
 @safe unittest
 {
-    string word = "Oachkatzlschwoaf";    
+    string word = "Oachkatzlschwoaf";
 
     // "Oachkatzlschwoaf" begins with 'O'
     // 'O' is the 0th element
