@@ -287,6 +287,198 @@ alias checkParenthesesPairs = balancedParens;
 }
 
 /++
+    Determines whether the given range ends with the given element
+ +/
+@safe bool endsWith(Range, T)(Range doesThisEnd, T withThis)
+        if (isBidirectionalRange!Range
+            && is(typeof(binaryFun!"a == b"(doesThisEnd.front, withThis)) : bool))
+{
+    return std.algorithm.searching.endsWith(doesThisEnd, withThis);
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" ends with an 'f'
+    char c = 'f';
+    assert(word.endsWith(c));
+
+    // "Oachkatzlschwoaf" doesn't end with an 'O'
+    assert(!word.endsWith('O'));
+}
+
+/++
+    Determines whether the given range ends with all the elements from another one in the same order
+ +/
+@safe bool endsWith(Range, Rn)(Range doesThisEnd, Rn withThese)
+        if (isBidirectionalRange!Range && isInputRange!Rn
+            && is(typeof(binaryFun!"a == b"(doesThisEnd.front, withThese.front)) : bool))
+{
+    return std.algorithm.searching.endsWith(doesThisEnd, withThese);
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    int[] primes = [3, 5, 7, 11, 13, 17, 19, 23];
+
+    // primes ends with 19 and 23
+    int[] num = [19, 23];
+    assert(primes.endsWith(num));
+    // primes enda with 17, 19 and 23
+    assert(primes.endsWith([17, 19, 23]));
+
+    // primes doesn't end with 22, 24 and 26
+    assert(!primes.endsWith([22, 24, 26]));
+
+    // primes doesn't end with 23 and then 19
+    // Note: wrong order
+    assert(!primes.endsWith([23, 19]));
+}
+/++ ditto +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" ends with "af"
+    char[] arr = ['a', 'f'];
+    assert(word.endsWith(arr));
+
+    // "Oachkatzlschwoaf" ends with "schwoaf"
+    assert(word.endsWith("schwoaf"));
+
+    // "Oachkatzlschwoaf" doesn't end with "fa"
+    // Note: wrong order
+    assert(!word.endsWith(['f', 'a']));
+}
+
+/++
+    Determines whether the given range ends with any element of another range
+ +/
+@safe bool endsWithAny(Range, Rn)(Range doesThisEnd, Rn withAnyOfThese)
+        if (isBidirectionalRange!Range && isInputRange!Rn
+            && (is(typeof(binaryFun!"a == b"(doesThisEnd.front, withAnyOfThese.front))
+            : bool) || is(typeof(binaryFun!"a == b"(doesThisEnd.front,
+            withAnyOfThese.front.front)) : bool)))
+{
+    foreach (x; withAnyOfThese)
+        if (doesThisEnd.endsWith(x))
+            return true;
+
+    return false;
+}
+/++ ditto +/
+@safe bool endsWithAny(Range, Rn...)(Range doesThisEnd, Rn withAnyOfThese)
+        if (isBidirectionalRange!Range && Rn.length > 1)
+{
+    foreach (x; withAnyOfThese)
+        if (doesThisEnd.endsWith(x))
+            return true;
+
+    return false;
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" doesn't end with 'F'
+    // but it ends with 'f'
+    assert(word.endsWithAny(['F', 'f']));
+    assert(word.endsWithAny('F', 'f'));
+
+    // "Oachkatzlschwoaf" ends with 'f'
+    assert(word.endsWithAny(['f', 'z']));
+    assert(word.endsWithAny('f', 'z'));
+
+    // "Oachkatzlschwoaf" does neither end with "abc"
+    // nor with "Oachkatzl"
+    // but it ends with "schwoaf"
+    assert(word.endsWithAny(["abc", "Oachkatzl", "schwoaf"]));
+    assert(word.endsWithAny("abc", "Oachkatzl", "schwoaf"));
+
+    // "Oachkatzlschwoaf" does neither end with "abc"
+    // nor with "xyz"
+    assert(!word.endsWithAny(["abc", "xyz"]));
+    assert(!word.endsWithAny("abc", "xyz"));
+}
+
+/++
+    Returns:
+        the zero-based index of the argument that the given range starts with
+        <0 ... no match found
+ +/
+int endsWithNth(Range, Rn...)(Range thisEnds, Rn withTheNthOfThese)
+        if (isBidirectionalRange!Range && Rn.length > 1
+            && is(typeof(std.algorithm.searching.startsWith!"a == b"(thisEnds,
+            withTheNthOfThese[0])) : bool) && is(typeof(std.algorithm.searching.startsWith!"a == b"(thisEnds,
+            withTheNthOfThese[1 .. $])) : uint))
+{
+    immutable int r = cast(int)(std.algorithm.searching.endsWith(thisEnds, withTheNthOfThese));
+    return (r - 1);
+}
+/++ ditto +/
+int endsWithNth(Range, Rn)(Range thisEnds, Rn withTheNthOfThese)
+        if (isInputRange!Range && isInputRange!Rn
+            && (is(typeof(binaryFun!"a == b"(thisEnds.front, withTheNthOfThese.front))
+            : bool) || is(typeof(binaryFun!"a == b"(thisEnds.front,
+            withTheNthOfThese.front.front)) : bool)))
+{
+    // HACK: this patchy workaround function might not return the same results as the variadic one above
+
+    foreach (idx, var; withTheNthOfThese)
+        if (thisEnds.endsWith(var))
+            return idx;
+
+    return -1;
+}
+
+/++ Examples: +/
+@safe unittest
+{
+    int[] arr = [11, 22, 33];
+
+    // arr ends with 33
+    // 33 has the index 2 in the given range
+    assert(arr.endsWithNth(0, 22, 33, 11, 44) == 2);
+    assert(arr.endsWithNth([0, 22, 33, 11, 44]) == 2);
+
+    // arr ends with 33
+    // 33 has the index 1 in the given range
+    assert(arr.endsWithNth(0, 33) == 1);
+    assert(arr.endsWithNth([0, 33]) == 1);
+
+    // arr ends with 33
+    // 33 isn't part of the given range
+    assert(arr.endsWithNth(11, 22) < 0);
+    assert(arr.endsWithNth([11, 22]) < 0);
+}
+/++ ditto +/
+@safe unittest
+{
+    string word = "Oachkatzlschwoaf";
+
+    // "Oachkatzlschwoaf" ends with 'f'
+    // 'O' is the 0th element
+    assert(word.endsWithNth('f', 'F') == 0);
+    char[] arr = ['f', 'F'];
+    assert(word.endsWithNth(arr) == 0);
+
+    // "Oachkatzlschwoaf" doesn't end with "schweif"
+    // but it ends with "schwoaf" that has the index 1
+    assert(word.endsWithNth("schweif", "schwoaf", "schwaif") == 1);
+    assert(word.endsWithNth(["scheif", "schwoaf", "schwaif"]) == 1);
+
+    // "Oachkatzlschwoaf" does neither end with "schoaf"
+    // nor with "doaf"
+    assert(word.endsWithNth("schoaf", "doaf") < 0);
+    assert(word.endsWithNth(["schoaf", "doaf"]) < 0);
+}
+
+/++
     Determines the zero-based index of the first occurrence of a specified element in a range
  +/
 ptrdiff_t indexOf(Range, T)(Range r, T element)
@@ -397,7 +589,6 @@ ptrdiff_t indexOf(Range, T)(Range r, T element)
 @safe bool startsWithAny(Range, Rn...)(Range doesThisStart, Rn withAnyOfThese)
         if (isInputRange!Range && Rn.length > 1)
 {
-
     foreach (x; withAnyOfThese)
         if (doesThisStart.startsWith(x))
             return true;
@@ -464,7 +655,6 @@ int startsWithNth(Range, Rn)(Range thisStarts, Rn withTheNthOfThese)
 /++ Examples: +/
 @safe unittest
 {
-
     int[] arr = [11, 22, 33];
 
     // arr starts with 11
